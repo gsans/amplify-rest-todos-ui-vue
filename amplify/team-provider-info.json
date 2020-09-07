@@ -1,0 +1,19 @@
+{
+  "devfour": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-amplifyapp-devfour-184037-authRole",
+      "UnauthRoleArn": "arn:aws:iam::664371068953:role/amplify-amplifyapp-devfour-184037-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::664371068953:role/amplify-amplifyapp-devfour-184037-authRole",
+      "Region": "eu-west-2",
+      "DeploymentBucketName": "amplify-amplifyapp-devfour-184037-deployment",
+      "UnauthRoleName": "amplify-amplifyapp-devfour-184037-unauthRole",
+      "StackName": "amplify-amplifyapp-devfour-184037",
+      "StackId": "arn:aws:cloudformation:eu-west-2:664371068953:stack/amplify-amplifyapp-devfour-184037/4074f640-f131-11ea-9e9e-0a7b4b86e558"
+    },
+    "categories": {
+      "auth": {
+        "cognito9a37bdf0": {}
+      }
+    }
+  }
+}
