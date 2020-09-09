@@ -1,8 +1,8 @@
 {
-  "httpMethod": "POST",
+  "httpMethod": "PUT",
   "path": "/todos",
   "headers": {
     "Content-Type": "application/json"
   },
-  "body": "{ \"text\" : \"todo-1\" }"
+  "body": "{ \"id\" : \"318dfc74-5666-46f1-844d-431c3ac18784\", \"text\" : \"todo-2\", \"complete\" : \"true\" }"
 }

@@ -47,48 +47,38 @@ export default {
     })
   },
   methods: {
-    getTodos: function () {
-      //eslint-disable-next-line no-debugger 
-      debugger;
+    getTodos: function() {
       console.log("getTodos");
       API.get('todosApiZZZ', `/todos`, {}).then((result) => {
-        console.log(JSON.stringify(result));
+        console.log(result);
       }).catch(err => {
         console.log(err);
       })
     },
-    getTodo: function () {
-      //eslint-disable-next-line no-debugger 
-      debugger;
+    getTodo: function() {
       const id = this.lastTodoId;
       if (!id) return;
       console.log(`getTodo-${id}`);
       API.get('todosApiZZZ', `/todos/${id}`, {}).then((result) => {
-        console.log(JSON.stringify(result));
+        console.log(result);
       }).catch(err => {
         console.log(err);
       })
     },    
-    addTodo: function () {
-      //eslint-disable-next-line no-debugger 
-      debugger;
+    addTodo: function() {
       console.log(`addTodo`);
       API.post('todosApiZZZ', `/todos`, { 
         body: {
           text: "todo1"
         }
-      }).then((result) => {
-        //eslint-disable-next-line no-debugger 
-        debugger;
-        console.log(JSON.stringify(result));
+      }).then(result => {
+        console.log(result);
         this.lastTodoId = JSON.parse(result.body).id;
       }).catch(err => {
         console.log(err);
       })
     },    
-    updateTodo: function () {
-      //eslint-disable-next-line no-debugger 
-      debugger;
+    updateTodo: function() {
       const id = this.lastTodoId;
       if (!id) return;
       console.log(`updateTodo-${id}`);
@@ -96,22 +86,20 @@ export default {
         body: {
           id: id,
           text: "todo2",
-          checked: true
+          complete: true
         }
-      }).then((result) => {
-        console.log(JSON.stringify(result));
+      }).then(result => {
+        console.log(result);
       }).catch(err => {
         console.log(err);
       })      
     },    
-    deleteTodo: function () {
-      //eslint-disable-next-line no-debugger 
-      debugger;
+    deleteTodo: function() {
       const id = this.lastTodoId;
       if (!id) return;
       console.log(`deleteTodo-${id}`);
-      API.del('todosApiZZZ', `/todos/${id}`, {}).then((result) => {
-        console.log(JSON.stringify(result));
+      API.del('todosApiZZZ', `/todos/${id}`, {}).then(result => {
+        console.log(result);
         this.lastTodoId = "";
       }).catch(err => {
         console.log(err);
@@ -204,10 +192,6 @@ h1 {
   padding: 3em 0 3em 0;
   box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.3);
 }
-.app-logo {
-  width: 126px;
-  margin: 0 auto;
-}
 .app-body {
   width: 60%;
   margin: 0 auto;
@@ -237,62 +221,7 @@ h1 {
 button:hover {
   opacity: 0.8;
 }
-input {
-  width: 100px;
-  padding: 6px;
-  font-size: 14px;
-  color: var(--input-color);
-  background-color: var(--input-background-color);
-  background-image: none;
-  border: 1px solid var(--lightGrey);
-  border-radius: 3px;
-  box-sizing: border-box;
-  margin: 10px;
-}
-.card-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  display: -webkit-flex;
-  -webkit-justify-content: center;
-  -webkit-align-items: center;
-  flex-direction: row;
-  flex-wrap: wrap;
-}
-.card {
-  background-color: white;
-  border-radius: 3px;
-  box-shadow: 0 2px 8px 0 rgba(0,0,0,0.25);
-  min-width: 180px;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 20px;
-  /* height: 100%; */
-  transition: transform .2s ease, box-shadow .2s ease;
-  backface-visibility: hidden;
-  margin: 25px;
-}
-.card:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 14px 0 rgba(0,0,0,0.15);
-}
-.name {
-  font-style: italic;
-}
-.symbol {
-  color: #999;
-}
-.price, .loading {
-  font-weight: bold;
-  font-size: 2em;
-  line-height: 0.9;
-  margin: 10px;
-}
-.loading {
-  margin-top: 35px;
-}
+
 /* remove blue highlight */
 textarea:hover, 
 input:hover:not([type="checkbox"]), 
@@ -311,25 +240,6 @@ select
   outline:0px !important;
   -webkit-appearance:none;
   box-shadow: none !important;
-}
-textarea {
-  background-color: #eee;
-  border-radius: 0 4px 4px 0;
-}
-textarea {
-  border-radius: 4px 0 0 4px;
-  border-right: 10px solid #dbdbdb;
-}
-.remove {
-  top: -15px;
-  position: relative;
-  align-self: flex-end;
-}
-.remove button {
-  background-color: #DD3F5B;
-  color: white;
-  border-radius: 31px;
-  border: 0px;
 }
 .welcome {
   display: flex;
