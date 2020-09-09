@@ -43,6 +43,7 @@ export default {
       // set current user and load data after login
       if (state === AuthState.SignedIn) {
         this.user = user;
+        console.log(user);
       }
     })
   },
