@@ -1,17 +1,122 @@
 <template>
   <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+    <div class="app-header">
+      <div class="app-logo">
+        <img src="https://aws-amplify.github.io/images/Logos/Amplify-Logo-White.svg" alt="AWS Amplify" />
+      </div>
+      <h1>Welcome to the Amplify Framework</h1>
+    </div>
+    <amplify-authenticator>
+      <div class="welcome">
+        <h1>Hey, {{user.username}}!</h1>
+        <amplify-sign-out></amplify-sign-out>
+      </div>
+      <div class="form-body">
+        <form v-on:submit.prevent>
+          <button @click='getTodos' class='button'>GET /todos</button>
+          <button @click='getTodo' :disabled='lastTodoId==""' class='button'>GET /todos/:id</button>
+          <button @click='addTodo' class='button'>POST /todos</button>
+          <button @click='updateTodo' :disabled='lastTodoId==""' class='button'>PUT /todos</button>
+          <button @click='deleteTodo' :disabled='lastTodoId==""' class='button'>DELETE /todos/:id</button>
+          <div>Current Todo: {{ lastTodoId || "Not set. Add a new todo" }}</div>
+        </form>
+      </div>
+    </amplify-authenticator>
   </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import { AuthState, onAuthUIStateChange } from '@aws-amplify/ui-components';
+import { API } from 'aws-amplify';
 
 export default {
-  name: 'App',
-  components: {
-    HelloWorld
+  name: 'app',
+  data() {
+    return {
+      user: { },
+      lastTodoId: ""
+    }
+  },
+  created() {
+    // authentication state managament
+    onAuthUIStateChange((state, user) => {
+      // set current user and load data after login
+      if (state === AuthState.SignedIn) {
+        this.user = user;
+      }
+    })
+  },
+  methods: {
+    getTodos: function () {
+      //eslint-disable-next-line no-debugger 
+      debugger;
+      console.log("getTodos");
+      API.get('todosApiZZZ', `/todos`, {}).then((result) => {
+        console.log(JSON.stringify(result));
+      }).catch(err => {
+        console.log(err);
+      })
+    },
+    getTodo: function () {
+      //eslint-disable-next-line no-debugger 
+      debugger;
+      const id = this.lastTodoId;
+      if (!id) return;
+      console.log(`getTodo-${id}`);
+      API.get('todosApiZZZ', `/todos/${id}`, {}).then((result) => {
+        console.log(JSON.stringify(result));
+      }).catch(err => {
+        console.log(err);
+      })
+    },    
+    addTodo: function () {
+      //eslint-disable-next-line no-debugger 
+      debugger;
+      console.log(`addTodo`);
+      API.post('todosApiZZZ', `/todos`, { 
+        body: {
+          text: "todo1"
+        }
+      }).then((result) => {
+        //eslint-disable-next-line no-debugger 
+        debugger;
+        console.log(JSON.stringify(result));
+        this.lastTodoId = JSON.parse(result.body).id;
+      }).catch(err => {
+        console.log(err);
+      })
+    },    
+    updateTodo: function () {
+      //eslint-disable-next-line no-debugger 
+      debugger;
+      const id = this.lastTodoId;
+      if (!id) return;
+      console.log(`updateTodo-${id}`);
+      API.put('todosApiZZZ', `/todos`, { 
+        body: {
+          id: id,
+          text: "todo2",
+          checked: true
+        }
+      }).then((result) => {
+        console.log(JSON.stringify(result));
+      }).catch(err => {
+        console.log(err);
+      })      
+    },    
+    deleteTodo: function () {
+      //eslint-disable-next-line no-debugger 
+      debugger;
+      const id = this.lastTodoId;
+      if (!id) return;
+      console.log(`deleteTodo-${id}`);
+      API.del('todosApiZZZ', `/todos/${id}`, {}).then((result) => {
+        console.log(JSON.stringify(result));
+        this.lastTodoId = "";
+      }).catch(err => {
+        console.log(err);
+      })
+    },
   }
 }
 </script>
@@ -23,6 +128,223 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin-top: 60px;
+}
+:root {
+  --amazonOrange: #FF9900;
+  --lightAmazonOrange: #FFAC31;
+  --darkAmazonOrange: #E88B01;
+  --squidInk: #232F3E;
+  --lightSquidInk: #31465F;
+  --deepSquidInk: #152939;
+  --grey: #828282;
+  --lightGrey: #C4C4C4;
+  --silver: #E1E4EA;
+  --darkBlue: #31465F;
+  --red: #DD3F5B;
+  --white: #FFFFFF;
+  --light-blue: #00a1c9;
+  --button-color: var(--white);
+  --button-background-color: var(--amazonOrange);
+  --button-click: var(--darkAmazonOrange);
+  --link-color: var(--amazonOrange);
+  --form-color: var(--white);
+  --input-color: var(--deepSquidInk);
+  --input-background-color: var(--white);
+  --font-family: "Amazon Ember","Helvetica Neue Light","Helvetica Neue","Helvetica" ,"Arial","sans-serif";
+  --body-background: #F8F4F4;
+  --component-width-desktop: 460px;
+  --component-width-mobile: 100%;
+  --color-primary: #FF9900;
+  --color-primary-accent: #232F3E;
+  --color-primary-highlight: #FFC46D;
+  --color-background: #232F3E;
+  --color-secondary: #152939;
+  --color-secondary-accent: #31465F;
+  --color-danger: #DD3F5B;
+  --color-error: #D0021B;
+  --color-accent-brown: #828282;
+  --color-accent-blue: #E1E4EA;
+  --gradient-blaze: linear-gradient(270deg, #FFC300 0%, #FF9000 100%);
+  --color-blue: #007EB9;
+  --color-purple: #527FFF;
+  --color-gray: #828282;
+  --color-white: #FFFFFF;
+  --input-border: 1px solid #C4C4C4;
+  --input-padding: 0.5em 0.5em 0.3em 1em;
+  --box-shadow: 1px 1px 4px 0 rgba(0,0,0,0.15);
+  --button-height: 42px;
+  --interactions-conversation-height: 250px;
+  --ion-color-primary: #FF9900;
+  --ion-color-primary-rgb: 255,153,0;
+  --ion-color-primary-contrast: #fff;
+  --ion-color-primary-contrast-rgb: 255,255,255;
+  --ion-color-primary-shade: #232F3E;
+  --ion-color-primary-tint: #FFC46D;
+}
+html,
+body {
+  font-family: "Amazon Ember", "Helvetica", "sans-serif";
+  margin: 0;
+}
+a {
+  color: #ff9900;
+}
+h1 {
+  font-weight: 300;
+}
+.app {
+  width: 100%;
+}
+.app-header {
+  color: white;
+  text-align: center;
+  background: linear-gradient(30deg, #f90 55%, #ffc300);
+  width: 100%;
+  margin: 0 0 1em 0;
+  padding: 3em 0 3em 0;
+  box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.3);
+}
+.app-logo {
+  width: 126px;
+  margin: 0 auto;
+}
+.app-body {
+  width: 60%;
+  margin: 0 auto;
+  text-align: center;
+  min-height: 500px;
+}
+.form-body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  display: -webkit-flex;
+  -webkit-justify-content: center;
+  -webkit-align-items: center;
+  flex-direction: row;
+  flex-wrap: wrap; 
+}
+.form-body button {
+  background-color: #ff9900;
+  font-size: 14px;
+  color: white;
+  text-transform: uppercase;
+  padding: 1em;
+  border: none;
+  cursor: pointer;
+  margin: 10px;
+}
+button:hover {
+  opacity: 0.8;
+}
+input {
+  width: 100px;
+  padding: 6px;
+  font-size: 14px;
+  color: var(--input-color);
+  background-color: var(--input-background-color);
+  background-image: none;
+  border: 1px solid var(--lightGrey);
+  border-radius: 3px;
+  box-sizing: border-box;
+  margin: 10px;
+}
+.card-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  display: -webkit-flex;
+  -webkit-justify-content: center;
+  -webkit-align-items: center;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+.card {
+  background-color: white;
+  border-radius: 3px;
+  box-shadow: 0 2px 8px 0 rgba(0,0,0,0.25);
+  min-width: 180px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 20px;
+  /* height: 100%; */
+  transition: transform .2s ease, box-shadow .2s ease;
+  backface-visibility: hidden;
+  margin: 25px;
+}
+.card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 14px 0 rgba(0,0,0,0.15);
+}
+.name {
+  font-style: italic;
+}
+.symbol {
+  color: #999;
+}
+.price, .loading {
+  font-weight: bold;
+  font-size: 2em;
+  line-height: 0.9;
+  margin: 10px;
+}
+.loading {
+  margin-top: 35px;
+}
+/* remove blue highlight */
+textarea:hover, 
+input:hover:not([type="checkbox"]), 
+textarea:active, 
+input:active:not([type="checkbox"]), 
+textarea:focus, 
+input:focus:not([type="checkbox"]),
+button:focus,
+button:active,
+button:hover,
+label:focus,
+.btn:active,
+.btn.active,
+select
+{
+  outline:0px !important;
+  -webkit-appearance:none;
+  box-shadow: none !important;
+}
+textarea {
+  background-color: #eee;
+  border-radius: 0 4px 4px 0;
+}
+textarea {
+  border-radius: 4px 0 0 4px;
+  border-right: 10px solid #dbdbdb;
+}
+.remove {
+  top: -15px;
+  position: relative;
+  align-self: flex-end;
+}
+.remove button {
+  background-color: #DD3F5B;
+  color: white;
+  border-radius: 31px;
+  border: 0px;
+}
+.welcome {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: row;
+}
+.welcome h1 {
+  margin-right: 40px;
+}
+
+button:disabled,
+button[disabled]{
+  border: 1px solid #999999;
+  background-color: #cccccc;
+  color: #666666;
 }
 </style>

@@ -1,19 +1,11 @@
-/*
-Copyright 2017 - 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance with the License. A copy of the License is located at
-    http://aws.amazon.com/apache2.0/
-or in the "license" file accompanying this file. This file is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and limitations under the License.
-*/
-
-
-
 const AWS = require('aws-sdk')
 var awsServerlessExpressMiddleware = require('aws-serverless-express/middleware')
 var bodyParser = require('body-parser')
 var express = require('express')
+const { v4: uuidv4 } = require('uuid')
 
-AWS.config.update({ region: process.env.TABLE_REGION });
+//AWS.config.update({ region: process.env.TABLE_REGION });
+AWS.config.update({ region: "eu-west-2" });
 
 const dynamodb = new AWS.DynamoDB.DocumentClient();
 
@@ -22,212 +14,141 @@ if(process.env.ENV && process.env.ENV !== "NONE") {
   tableName = tableName + '-' + process.env.ENV;
 }
 
-const userIdPresent = false; // TODO: update in case is required to use that definition
-const partitionKeyName = "id";
-const partitionKeyType = "S";
-const sortKeyName = "";
-const sortKeyType = "";
-const hasSortKey = sortKeyName !== "";
-const path = "/todos";
-const UNAUTH = 'UNAUTH';
-const hashKeyPath = '/:' + partitionKeyName;
-const sortKeyPath = hasSortKey ? '/:' + sortKeyName : '';
-// declare a new express app
 var app = express()
 app.use(bodyParser.json())
 app.use(awsServerlessExpressMiddleware.eventContext())
 
-// Enable CORS for all methods
-app.use(function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*")
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
+app.use(function(request, response, next) {
+  response.header("Access-Control-Allow-Origin", "*")
+  response.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
   next()
 });
 
-// convert url string param to expected Type
-const convertUrlType = (param, type) => {
-  switch(type) {
-    case "N":
-      return Number.parseInt(param);
-    default:
-      return param;
+const getUserId = (request) => {
+  try {
+    const reqContext = request.apiGateway.event.requestContext;
+    const authProvider = reqContext.identity.cognitoAuthenticationProvider;
+    return authProvider ? authProvider.split(":CognitoSignIn:").pop() : "UNAUTH";
+  } catch (error) {
+    return "UNAUTH";
   }
 }
 
-/********************************
- * HTTP Get method for list objects *
- ********************************/
-
-app.get(path + hashKeyPath, function(req, res) {
-  var condition = {}
-  condition[partitionKeyName] = {
-    ComparisonOperator: 'EQ'
-  }
-
-  if (userIdPresent && req.apiGateway) {
-    condition[partitionKeyName]['AttributeValueList'] = [req.apiGateway.event.requestContext.identity.cognitoIdentityId || UNAUTH ];
-  } else {
-    try {
-      condition[partitionKeyName]['AttributeValueList'] = [ convertUrlType(req.params[partitionKeyName], partitionKeyType) ];
-    } catch(err) {
-      res.statusCode = 500;
-      res.json({error: 'Wrong column type ' + err});
-    }
-  }
-
-  let queryParams = {
+app.get("/todos", function(request, response) {
+  let params = {
     TableName: tableName,
-    KeyConditions: condition
+    limit: 100
   }
-
-  dynamodb.query(queryParams, (err, data) => {
-    if (err) {
-      res.statusCode = 500;
-      res.json({error: 'Could not load items: ' + err});
+  dynamodb.scan(params, (error, result) => {
+    if (error) {
+      response.json({statusCode: 500, error: error.message});
     } else {
-      res.json(data.Items);
+      response.json({statusCode: 200, url: request.url, body: JSON.stringify(result.Items)})
     }
   });
 });
 
-/*****************************************
- * HTTP Get method for get single object *
- *****************************************/
-
-app.get(path + '/object' + hashKeyPath + sortKeyPath, function(req, res) {
-  var params = {};
-  if (userIdPresent && req.apiGateway) {
-    params[partitionKeyName] = req.apiGateway.event.requestContext.identity.cognitoIdentityId || UNAUTH;
-  } else {
-    params[partitionKeyName] = req.params[partitionKeyName];
-    try {
-      params[partitionKeyName] = convertUrlType(req.params[partitionKeyName], partitionKeyType);
-    } catch(err) {
-      res.statusCode = 500;
-      res.json({error: 'Wrong column type ' + err});
-    }
-  }
-  if (hasSortKey) {
-    try {
-      params[sortKeyName] = convertUrlType(req.params[sortKeyName], sortKeyType);
-    } catch(err) {
-      res.statusCode = 500;
-      res.json({error: 'Wrong column type ' + err});
-    }
-  }
-
-  let getItemParams = {
+app.get("/todos/:id", function(request, response) {
+  let params = {
     TableName: tableName,
-    Key: params
+    Key: {
+      id: request.params.id
+    }
   }
-
-  dynamodb.get(getItemParams,(err, data) => {
-    if(err) {
-      res.statusCode = 500;
-      res.json({error: 'Could not load items: ' + err.message});
+  dynamodb.get(params,(error, result) => {
+    if(error) {
+      response.json({statusCode: 500, error: error.message});
     } else {
-      if (data.Item) {
-        res.json(data.Item);
-      } else {
-        res.json(data) ;
-      }
+      response.json({statusCode: 200, url: request.url, body: JSON.stringify(result.Item)})
     }
   });
 });
 
-
-/************************************
-* HTTP put method for insert object *
-*************************************/
-
-app.put(path, function(req, res) {
-
-  if (userIdPresent) {
-    req.body['userId'] = req.apiGateway.event.requestContext.identity.cognitoIdentityId || UNAUTH;
+app.put("/todos", function(request, response) {
+  if (!request.body.id) {
+    response.json({statusCode: 500, error: 'Missing id', url: request.url});
+    return;
   }
-
-  let putItemParams = {
+  if (!request.body.text && !request.body.checked) {
+    response.json({statusCode: 200, error: 'No changes', url: request.url});
+    return;
+  }
+  const timestamp = new Date().toISOString();
+  const params = {
     TableName: tableName,
-    Item: req.body
+    Key: {
+      id: request.body.id,
+    },
+    ExpressionAttributeNames: {
+      '#todo_text': 'text',
+    },
+    ExpressionAttributeValues: {
+      ':updatedAt': timestamp,
+    },
+    UpdateExpression: 'SET ',
+    ReturnValues: 'ALL_NEW',
+  };
+  if (request.body.text) {
+    params.ExpressionAttributeValues[':text'] = request.body.text;
+    params.UpdateExpression += '#todo_text = :text, ';
   }
-  dynamodb.put(putItemParams, (err, data) => {
-    if(err) {
-      res.statusCode = 500;
-      res.json({error: err, url: req.url, body: req.body});
+  if (request.body.checked) {
+    params.ExpressionAttributeValues[':checked'] = request.body.checked;
+    params.UpdateExpression += 'checked = :checked, ';
+  }
+  if (request.body.text || request.body.checked) {
+    params.UpdateExpression += 'updatedAt = :updatedAt';
+  }
+  dynamodb.update(params, (error, result) => {
+    if(error) {
+      response.json({statusCode: 500, error: error.message, url: request.url});
     } else{
-      res.json({success: 'put call succeed!', url: req.url, data: data})
+      response.json({statusCode: 200, url: request.url, body: JSON.stringify(result.Attributes)})
     }
   });
 });
 
-/************************************
-* HTTP post method for insert object *
-*************************************/
+app.post("/todos", function(request, response) {
+  const timestamp = new Date().toISOString();
 
-app.post(path, function(req, res) {
-
-  if (userIdPresent) {
-    req.body['userId'] = req.apiGateway.event.requestContext.identity.cognitoIdentityId || UNAUTH;
-  }
-
-  let putItemParams = {
+  let params = {
     TableName: tableName,
-    Item: req.body
+    Item: { 
+      ...request.body,
+      id: uuidv4(), // auto-generate id
+      checked: false,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      userId: getUserId(request)
+    } 
   }
-  dynamodb.put(putItemParams, (err, data) => {
-    if(err) {
-      res.statusCode = 500;
-      res.json({error: err, url: req.url, body: req.body});
+
+  dynamodb.put(params, (error, result) => {
+    if(error) {
+      response.json({statusCode: 500, error: error.message, url: request.url});
     } else{
-      res.json({success: 'post call succeed!', url: req.url, data: data})
+      response.json({statusCode: 200, url: request.url, body: JSON.stringify(params.Item)})
     }
   });
 });
 
-/**************************************
-* HTTP remove method to delete object *
-***************************************/
-
-app.delete(path + '/object' + hashKeyPath + sortKeyPath, function(req, res) {
-  var params = {};
-  if (userIdPresent && req.apiGateway) {
-    params[partitionKeyName] = req.apiGateway.event.requestContext.identity.cognitoIdentityId || UNAUTH;
-  } else {
-    params[partitionKeyName] = req.params[partitionKeyName];
-     try {
-      params[partitionKeyName] = convertUrlType(req.params[partitionKeyName], partitionKeyType);
-    } catch(err) {
-      res.statusCode = 500;
-      res.json({error: 'Wrong column type ' + err});
-    }
-  }
-  if (hasSortKey) {
-    try {
-      params[sortKeyName] = convertUrlType(req.params[sortKeyName], sortKeyType);
-    } catch(err) {
-      res.statusCode = 500;
-      res.json({error: 'Wrong column type ' + err});
-    }
-  }
-
-  let removeItemParams = {
+app.delete("/todos/:id", function(request, response) {
+  let params = {
     TableName: tableName,
-    Key: params
+    Key: {
+      id: request.params.id
+    }
   }
-  dynamodb.delete(removeItemParams, (err, data)=> {
-    if(err) {
-      res.statusCode = 500;
-      res.json({error: err, url: req.url});
+  dynamodb.delete(params, (error, result)=> {
+    if(error) {
+      response.json({statusCode: 500, error: error.message, url: request.url});
     } else {
-      res.json({url: req.url, data: data});
+      response.json({statusCode: 200, url: request.url, body: JSON.stringify(result)})
     }
   });
 });
+
 app.listen(3000, function() {
     console.log("App started")
 });
-
-// Export the app object. When executing the application local this does nothing. However,
-// to port it to AWS Lambda we will create a wrapper around that will load the app from
-// this file
 module.exports = app

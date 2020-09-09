@@ -1,0 +1,8 @@
+{
+  "httpMethod": "PUT",
+  "path": "/todos",
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "body": "{ \"id\" : \"a8363c0d-e189-437d-a52c-d97e6b7df411\", \"text\" : \"todo-2\", \"checked\" : \"true\" }"
+}

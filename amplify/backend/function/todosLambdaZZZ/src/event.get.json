@@ -1,0 +1,4 @@
+{
+  "httpMethod": "GET",
+  "path": "/todos"
+}
